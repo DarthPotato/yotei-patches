@@ -50,7 +50,7 @@ Addresses, the render-size settings and other notes are in [FINDINGS.md](FINDING
 
 ## Known issues on AnyKyty
 
-- **Long freezes with only music playing.** A few compute shaders can't be compiled in the background, so the game waits for the NVIDIA driver to compile them: 5–10 s when you enter a new area, and sometimes 2–3 minutes. Wait it out; the game carries on. I'm looking into why these come back in later sessions.
+- **Long freezes with only music playing.** A few compute shaders can't be compiled in the background, so the game waits for the NVIDIA driver to compile them: usually 5–25 s, and 2–3 minutes for a few very large ray-tracing shaders (they still run with the ray tracing option off). Wait it out; the game carries on. AnyKyty keeps every compiled shader, so each freeze happens only once per machine and they get rarer the more of the map you've played. They don't go away completely, because the game keeps producing new versions of the same shaders (mostly with a different number of textures bound).
 - **Don't turn on ray tracing** in the game's graphics menu. The game stops with `FATAL: Insufficient RTGI memory`. The setting is saved, so it then crashes on every load until you reset the save.
 - **Memory.** A first run pushed committed memory near 40 GB. On a 24 GB machine, leave the Windows page file system-managed.
 - **Settings for playing.** Keep the default `KYTY_ASYNC_PIPELINES=1`. With `0` it freezes far more often, and `2` crashed for me.
