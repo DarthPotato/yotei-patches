@@ -46,7 +46,7 @@ Yōtei has its own internal quality ladder: a table of 22 rows of {LOD scale, su
 
 At row 15 the game itself sends about 40–45% fewer draws and dispatches. The game also rewrites the row while it runs, so the patches change all 17 instructions that read it (`movsxd r64, [rip+row]` → `mov r32, <row>; nop`). Rows 16–21 also stop drawing the player's body, so row 15 is the lowest useful row. The game looks rougher: lower-detail models, sparser grass and fewer shadows.
 
-Addresses, the render-size settings and other notes are in [FINDINGS.md](FINDINGS.md).
+Addresses, the render-size settings and other notes are in [FINDINGS.md](FINDINGS.md). Measurements of the AnyKyty shader compile freezes are in [anykyty-shader-compile-report.md](anykyty-shader-compile-report.md).
 
 ## Known issues on AnyKyty
 
