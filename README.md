@@ -13,22 +13,26 @@ Measured on a Ryzen 5 3600 + RTX 3080 10 GB with 24 GB RAM, game 02.002, in the 
 | AnyKyty `yotei/best`, 1080p output | 15.6 fps | **23.8 fps** (about 21–25 in actual play) |
 | SharpEmu main | 3.3 fps | 9.2 fps |
 
-AnyKyty at full detail with the game's normal 4K output runs at 8.1 fps. The 1080p output patch roughly doubles that.
+AnyKyty at full detail with the game's normal 4K output runs at 8.1 fps. The 1080p output patch roughly doubles that. In new areas the frame rate drops, to about 10–13 fps, while AnyKyty compiles the shaders it hasn't seen before.
+
+> **It will look worse.** Expect weird, glitchy textures, blocky edges, ghosting and double images on moving characters, and some flicker. That's the price I chose to pay for the frame rate. Still scenes and menus look fine.
 
 ## Which file
 
 | Emulator | File | What it does |
 |---|---|---|
-| AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-1080p-ladder15.toml`](anyps5/anyps5-yotei-02.002-1080p-ladder15.toml) | **Recommended.** 1080p render and output (shahulmubeen-a's 02.002 patch) plus ladder row 15 |
+| AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-1080p-ladder15-rtgi-off.toml`](anyps5/anyps5-yotei-02.002-1080p-ladder15-rtgi-off.toml) | **Recommended.** 1080p render and output (shahulmubeen-a's 02.002 patch), ladder row 15, and ray-traced GI kept off so the game doesn't crash in some areas |
+| AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-1080p-ladder15.toml`](anyps5/anyps5-yotei-02.002-1080p-ladder15.toml) | The same without RTGI off. Crashes in some areas, for example the Snake's house |
+| AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-rtgi-off.toml`](anyps5/anyps5-yotei-02.002-rtgi-off.toml) | RTGI off only, to combine with other patches |
 | AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-ladder15.toml`](anyps5/anyps5-yotei-02.002-ladder15.toml) | Ladder row 15 only |
 | AnyPS5 / AnyKyty | [`anyps5/anyps5-yotei-02.002-ladder11.toml`](anyps5/anyps5-yotei-02.002-ladder11.toml) | Ladder row 11 only (less detail lost, less speed gained) |
 | SharpEmu | [`sharpemu/GhostOfYotei.xml`](sharpemu/GhostOfYotei.xml) | **Performance mode** (row 15), **Balanced mode** (row 11), **Output at 1080p** |
 
-Use one ladder patch at a time.
+Use one ladder patch at a time. The relinker takes one `--patches` file, which is why the combined files exist.
 
 ### AnyPS5 / AnyKyty
 
-Pass the file to the relinker when you convert the game, with `--patches <file>` (for example together with `--windows`). Check it first with `--verify-patches`: all 17 ladder sites must match your unwrapped `eboot.elf`. The relinker prints each patch it applies.
+Pass the file to the relinker when you convert the game, with `--patches <file>` (for example together with `--windows`). Check it first with `--verify-patches`: every site must match your unwrapped `eboot.elf` (32 for the recommended file). The relinker prints each patch it applies.
 
 ### SharpEmu
 
@@ -51,10 +55,14 @@ Addresses, the render-size settings and other notes are in [FINDINGS.md](FINDING
 ## Known issues on AnyKyty
 
 - **Long freezes with only music playing.** A few compute shaders can't be compiled in the background, so the game waits for the NVIDIA driver to compile them: usually 5–25 s, and 2–3 minutes for a few very large ray-tracing shaders (they still run with the ray tracing option off). Wait it out; the game carries on. AnyKyty keeps every compiled shader, so each freeze happens only once per machine and they get rarer the more of the map you've played. They don't go away completely, because the game keeps producing new versions of the same shaders (mostly with a different number of textures bound).
-- **Don't turn on ray tracing** in the game's graphics menu. The game stops with `FATAL: Insufficient RTGI memory`. The setting is saved, so it then crashes on every load until you reset the save.
+- **`FATAL: Insufficient RTGI memory` crash.** The game turns on ray-traced global illumination by itself in some places, for example walking into the Snake's house, even with ray tracing off in the menu. It also turns on if you enable ray tracing in the graphics menu, and that setting is saved. With the 1080p patch, the memory block RTGI needs doesn't fit (345 MB free, 364 MB needed), so the game stops itself. Even when it fits, AnyKyty can't translate one of the RTGI compute shaders yet. **Use the recommended file with RTGI off**: it keeps RTGI off everywhere, and I played through the Snake's house and the boss fight with it. Indoor lighting is a bit flatter, and you get a few frames back.
 - **Memory.** A first run pushed committed memory near 40 GB. On a 24 GB machine, leave the Windows page file system-managed.
 - **Settings for playing.** Keep the default `KYTY_ASYNC_PIPELINES=1`. With `0` it freezes far more often, and `2` crashed for me.
 - **Xbox controller.** View presses the touchpad. To draw on the touchpad (for example when writing names), start with `ANYPS5_MOUSE_TOUCHPAD=1` and drag with the left mouse button.
+
+## What the RTGI patch does
+
+The game decides whether RTGI runs by reading one byte (app+0x53c20b0). It reads it in 10 places, all `cmp byte [rip+flag], imm8`, and never writes it directly. The patch points each of those reads at a constant zero byte in read-only data (app+0x1a4e666), so the game always sees RTGI as off. The memory check is at app+0x13ee3e0. It asks for 364 MB, or 397 MB when a second flag at app+0x464a5e4 is set, which is probably the PS5 Pro mode.
 
 ## Credits
 

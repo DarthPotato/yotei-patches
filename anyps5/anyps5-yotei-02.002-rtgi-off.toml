@@ -1,0 +1,85 @@
+# Ghost of Yotei PPSA26344 v02.002.000: keep RTGI (ray-traced global illumination) off.
+# The game reads one byte (app+0x53c20b0) to decide whether RTGI runs; when it is set, RTGI asks for a 364 MB arena block
+# (FATAL: Insufficient RTGI memory with the 1080p patch) and AnyKyty then fails on an RTGI compute shader. These 10 sites are
+# every rip-relative read of that byte (cmp byte [rip+flag], imm8); each now reads a constant zero byte instead. By DarthPotato. Verified 10/10 with --verify-patches.
+format = 1
+
+[[patch]]
+name     = "rtgi_off_11062d4"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0x11062d4
+expected = "803dd5bd2b0401"
+value    = "803d8b83940001"
+
+[[patch]]
+name     = "rtgi_off_11064ba"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0x11064ba
+expected = "803defbb2b0401"
+value    = "803da581940001"
+
+[[patch]]
+name     = "rtgi_off_11091fa"
+description = "cmp byte [rip+rtgi_flag], 0 -> cmp byte [rip+const_zero], 0"
+target   = "eboot.elf"
+va       = 0x11091fa
+expected = "803daf8e2b0400"
+value    = "803d6554940000"
+
+[[patch]]
+name     = "rtgi_off_13eeb8c"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0x13eeb8c
+expected = "803d1d35fd0301"
+value    = "803dd3fa650001"
+
+[[patch]]
+name     = "rtgi_off_c17bc0"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0xc17bc0
+expected = "803de9a47a0401"
+value    = "803d9f6ae30001"
+
+[[patch]]
+name     = "rtgi_off_c18652"
+description = "cmp byte [rip+rtgi_flag], 0 -> cmp byte [rip+const_zero], 0"
+target   = "eboot.elf"
+va       = 0xc18652
+expected = "803d579a7a0400"
+value    = "803d0d60e30000"
+
+[[patch]]
+name     = "rtgi_off_c31e4e"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0xc31e4e
+expected = "803d5b02790401"
+value    = "803d11c8e10001"
+
+[[patch]]
+name     = "rtgi_off_c36d52"
+description = "cmp byte [rip+rtgi_flag], 0 -> cmp byte [rip+const_zero], 0"
+target   = "eboot.elf"
+va       = 0xc36d52
+expected = "803d57b3780400"
+value    = "803d0d79e10000"
+
+[[patch]]
+name     = "rtgi_off_c36d78"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0xc36d78
+expected = "803d31b3780401"
+value    = "803de778e10001"
+
+[[patch]]
+name     = "rtgi_off_c36de0"
+description = "cmp byte [rip+rtgi_flag], 1 -> cmp byte [rip+const_zero], 1"
+target   = "eboot.elf"
+va       = 0xc36de0
+expected = "803dc9b2780401"
+value    = "803d7f78e10001"
