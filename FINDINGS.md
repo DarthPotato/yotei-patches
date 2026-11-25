@@ -68,6 +68,31 @@ Both emulators drew the same scene (AnyKyty: ~700 draws per frame at row 0, ~415
 - **Fast 16-bit float.** The upscaler's accumulate pass went 11.9 → 3.5 ms with native f16 arithmetic. The cost is last-bit differences from the console's rounding.
 - **Measured and dropped:** eager flip; readback batching; an early flush of hot readback writers (fired 170 times a frame, neutral); disabling eager readbacks (neutral); rendering below 1080p on this GPU (the CPU is the limit).
 
+## 5. Ray-traced GI (RTGI) and the "Insufficient RTGI memory" crash (02.002)
+
+The game stops itself with `FATAL: Insufficient RTGI memory: 345015552 (0x14908500) is less than 363834624 (0x15afad00)` in some places, for example walking into the Snake's house, even with ray tracing off in the menu. It also happens when the ray tracing option is enabled, and that setting is saved.
+
+| | 02.002.000 |
+|---|---|
+| RTGI init call | app+0x1109232 |
+| Runs when | byte A app+0x53c20b0 != 0, or byte B app+0x464a5e4 == 1 |
+| Memory check | app+0x13ee3e0: needs 0x15afad00 (364 MB), or 0x17a9f900 (397 MB) when byte B != 0 |
+| Arena | {base, cursor, size}; free = base + size - cursor; filled from renderer+0x32ec30 indexed by i*0xc8 |
+| Readers of byte A | 10, all `cmp byte [rip+A], imm8`: 0x11062d4, 0x11064ba, 0x11091fa, 0x13eeb8c, 0xc17bc0, 0xc18652, 0xc31e4e, 0xc36d52, 0xc36d78, 0xc36de0 |
+
+Byte B is read in about 30 places, including the output-size code; it is probably the PS5 Pro mode. With the 1080p patch (which shrinks the render-size table), the arena has 345 MB free. Without the table change, the check passes, but AnyKyty then stops on an RTGI compute shader it cannot translate yet (`shader resource tracking: hash=0x6f900f448f996185 ... buffer descriptor is not a valid runtime value`). The RTGI-off patch points the 10 reads of byte A at a constant zero byte (app+0x1a4e666), so RTGI never starts. Tested through the Snake's house and the boss fight that follows.
+
+## 6. NVIDIA shader cache on AnyKyty
+
+- NVIDIA keeps one driver shader cache per converted executable. A relink with different patches starts cold: about 12 minutes of shader compiling after the game starts.
+- The default total size (~1 GB) is too small. One Yōtei cache reaches 400-500 MB in a few sessions, and once the total goes over the cap, the driver deletes cached shaders. AnyKyty then recompiles them at every start (10+ minutes) and in game.
+- With **Shader Cache Size = Unlimited**, startup shader preparation of ~6,500 pipelines took 20 s.
+- Compute shader compile costs: see [anykyty-shader-compile-report.md](anykyty-shader-compile-report.md).
+
+## 7. Where the GPU time goes on AnyKyty (story area, standing still, 1080p + row 15)
+
+About 82 ms of GPU work per frame: compute dispatches 68 ms, draws 9 ms, other 5 ms (KYTY_GPU_TIME=1). Four compute shaders take 35 ms: 0xb308d10b60a20d6a 14.7 ms (3 dispatches), 0x3cfd6dedf0856e00 11.2 ms, 0x34039394b5884c9a 4.6 ms, 0x0c90949edd154e7b 4.4 ms. The GPU is 81-89% busy in these areas, so this is where frame rate is lost.
+
 ## Where the work is
 
 - SharpEmu fork and test builds: https://github.com/DarthPotato/sharpemu (branch `yotei3`, releases).
